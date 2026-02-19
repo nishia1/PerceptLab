@@ -1309,59 +1309,6 @@ function runRansacEllipse(){
   setProgress(100); finishOutput(); setStats(results.length,t1-t0,pts.length,totalInl,totalIters);
   setLegend([...results.map((r,i)=>({color:r.color,label:`ELLIPSE ${i+1} — ${Math.round(r.model.a)}×${Math.round(r.model.b)}px, ${r.inliers.length} inliers`})),{color:'rgba(120,140,160,0.5)',label:'OUTLIERS'}]);
 }
-  const ax=A.x,ay=A.y,bx=B.x,by=B.y,cx=C.x,cy=C.y;
-  const D=2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
-  if(Math.abs(D)<1e-6) return null;
-  const ux=((ax*ax+ay*ay)*(by-cy)+(bx*bx+by*by)*(cy-ay)+(cx*cx+cy*cy)*(ay-by))/D;
-  const uy=((ax*ax+ay*ay)*(cx-bx)+(bx*bx+by*by)*(ax-cx)+(cx*cx+cy*cy)*(bx-ax))/D;
-  return {cx:ux,cy:uy,r:Math.sqrt((ax-ux)**2+(ay-uy)**2)};
-}
-
-// =====================================================================
-// RANSAC — ELLIPSE (5-point algebraic fit)
-// =====================================================================
-function runRansacEllipse(){
-  const t0=performance.now();
-  const maxEll=parseInt(document.getElementById('sl-maxell').value);
-  const aspectLimit=parseInt(document.getElementById('sl-aspect').value)/10;
-  const {p,pts}=ransacSetup('RANSAC — ELLIPSE FITTING');
-  let remaining=pts.map((_,i)=>i);
-  const results=[];
-  for(let ei=0;ei<maxEll&&remaining.length>p.minInl;ei++){
-    let best=null,bestInl=[];
-    for(let it=0;it<p.iters;it++){
-      if(remaining.length<5) break;
-      const sample=[],used=new Set();
-      while(sample.length<5){const idx=remaining[Math.floor(Math.random()*remaining.length)];if(!used.has(idx)){used.add(idx);sample.push(idx);}}
-      const ell=fitEllipse5(sample.map(i=>pts[i]));
-      if(!ell) continue;
-      if(ell.a>0&&ell.b>0&&(Math.min(ell.a,ell.b)/Math.max(ell.a,ell.b))<aspectLimit) continue;
-      const {A,B,C,D,E,F}=ell.conic;
-      const inl=remaining.filter(i=>{
-        const {x,y}=pts[i];
-        const val=A*x*x+B*x*y+C*y*y+D*x+E*y+F;
-        const gx=2*A*x+B*y+D,gy=B*x+2*C*y+E;
-        return Math.abs(val/(Math.sqrt(gx*gx+gy*gy)||1))<p.thresh;
-      });
-      if(inl.length>bestInl.length){bestInl=inl;best=ell;}
-    }
-    if(!best||bestInl.length<p.minInl) break;
-    results.push({model:best,inliers:bestInl,color:COLORS[ei%COLORS.length]});
-    const iset=new Set(bestInl); remaining=remaining.filter(i=>!iset.has(i));
-  }
-  const allInl=new Set(results.flatMap(r=>r.inliers));
-  drawOutliers(pts,allInl);
-  results.forEach(({model,inliers,color})=>{
-    inliers.forEach(i=>{ctxOut.fillStyle=color;ctxOut.beginPath();ctxOut.arc(pts[i].x,pts[i].y,2.5,0,Math.PI*2);ctxOut.fill();});
-    ctxOut.save();ctxOut.strokeStyle=color;ctxOut.lineWidth=2.5;ctxOut.fillStyle=color+'18';
-    ctxOut.shadowColor=color;ctxOut.shadowBlur=12;
-    ctxOut.translate(model.cx,model.cy);ctxOut.rotate(model.angle);
-    ctxOut.beginPath();ctxOut.ellipse(0,0,Math.max(model.a,2),Math.max(model.b,2),0,0,Math.PI*2);
-    ctxOut.fill();ctxOut.stroke();ctxOut.restore();
-  });
-  const t1=performance.now(); finishOutput(); setStats(results.length,t1-t0,pts.length);
-  setLegend([...results.map((r,i)=>({color:r.color,label:`ELLIPSE ${i+1} — ${Math.round(r.model.a)}×${Math.round(r.model.b)}px, ${r.inliers.length} inliers`})),{color:'rgba(120,140,160,0.5)',label:'OUTLIERS'}]);
-}
 function fitEllipse5(pts5){
   const rows=pts5.map(({x,y})=>[x*x,x*y,y*y,x,y,1]);
   const M=rows.map(r=>r.slice(0,5));
