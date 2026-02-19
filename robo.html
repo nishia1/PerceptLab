@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PerceptLab</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500;700&display=swap');
+
+:root {
+  --bg: #f0ede8;
+  --panel: #ffffff;
+  --border: #d8d3cc;
+  --ink: #1a1612;
+  --dim: #8a8278;
+  --accent: #c84b2f;
+  --accent2: #2f6fc8;
+  --accent3: #2a8c4a;
+  --highlight: #ffd166;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Subtle grid texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+header {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 28px;
+  background: var(--ink);
+  color: #f0ede8;
+}
+
+.logo {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px; font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--highlight);
+}
+
+.logo span { color: #f0ede8; opacity: 0.5; }
+
+.header-tags {
+  display: flex; gap: 6px; margin-left: auto;
+}
+
+.tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 1px;
+  padding: 3px 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 2px;
+  color: rgba(255,255,255,0.5);
+}
+
+.main {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  flex: 1;
+  min-height: 0;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+
+.sb-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sb-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 2px;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Image source */
+.img-source-tabs {
+  display: flex; gap: 0;
+  margin-bottom: 12px;
+}
+.isrc-tab {
+  flex: 1; padding: 7px 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 1px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.isrc-tab:first-child { border-radius: 3px 0 0 3px; }
+.isrc-tab:last-child { border-radius: 0 3px 3px 0; border-left: none; }
+.isrc-tab.active {
+  background: var(--ink); color: var(--highlight);
+  border-color: var(--ink);
+}
+
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--bg);
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(200,75,47,0.04); }
+.upload-zone p { font-size: 12px; color: var(--dim); margin-top: 4px; }
+.upload-zone .icon { font-size: 24px; }
+#file-input { display: none; }
+
+.sample-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.sample-btn {
+  padding: 0; border: 2px solid var(--border);
+  border-radius: 4px; overflow: hidden;
+  cursor: pointer; background: none;
+  transition: border-color 0.12s;
+  position: relative;
+}
+.sample-btn:hover { border-color: var(--accent2); }
+.sample-btn.active { border-color: var(--accent); }
+.sample-btn canvas { display: block; width: 100%; height: 60px; }
+.sample-btn .slabel {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  padding: 3px 6px;
+  background: var(--ink); color: #ccc;
+  text-align: left;
+}
+
+/* Algo tabs */
+.algo-tabs {
+  display: flex; gap: 0;
+}
+.algo-tab {
+  flex: 1; padding: 8px 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: center;
+}
+.algo-tab:not(:last-child) { border-right: none; }
+.algo-tab:first-child { border-radius: 3px 0 0 3px; }
+.algo-tab:last-child { border-radius: 0 3px 3px 0; }
+.algo-tab.active { background: var(--ink); color: var(--highlight); border-color: var(--ink); }
+
+/* Controls */
+.ctrl-panels > div { display: none; }
+.ctrl-panels > div.show { display: flex; flex-direction: column; gap: 10px; }
+
+.ctrl-row {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 6px;
+}
+.ctrl-lbl {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--dim);
+  white-space: nowrap;
+}
+.ctrl-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--accent);
+  min-width: 30px; text-align: right;
+}
+input[type=range] {
+  -webkit-appearance: none; width: 100%;
+  height: 3px; background: var(--border);
+  border-radius: 2px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--ink); cursor: pointer;
+  border: 2px solid var(--accent);
+}
+
+.sample-info {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; color: var(--dim);
+  line-height: 1.6;
+}
+
+.prim-btn {
+  padding: 7px 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 1px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.12s;
+  text-align: center;
+}
+.prim-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.prim-btn.active { background: var(--ink); color: var(--highlight); border-color: var(--ink); }
+
+/* Tooltips */
+.has-tip { position: relative; cursor: help; }
+.has-tip::after {
+  content: attr(data-tip);
+  position: absolute; left: 0; top: calc(100% + 6px);
+  background: var(--ink); color: #f0ede8;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+  line-height: 1.5; padding: 7px 10px; border-radius: 3px;
+  width: 200px; z-index: 100; pointer-events: none;
+  opacity: 0; transition: opacity 0.15s;
+  white-space: normal;
+}
+.has-tip:hover::after { opacity: 1; }
+
+/* Progress bar */
+.progress-wrap {
+  height: 3px; background: var(--border); border-radius: 2px;
+  overflow: hidden; margin-top: 2px;
+}
+.progress-bar {
+  height: 100%; background: var(--accent);
+  border-radius: 2px; width: 0%;
+  transition: width 0.1s linear;
+}
+
+/* Log panel */
+.log-panel {
+  background: var(--ink); border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+  color: #8a9aaa; overflow-y: auto; max-height: 130px;
+  padding: 8px 10px; line-height: 1.7;
+  border: 1px solid #2a3440;
+}
+.log-panel .log-line { display: flex; gap: 8px; }
+.log-panel .log-ts  { color: #3a5060; flex-shrink: 0; }
+.log-panel .log-ok  { color: #39ff14; }
+.log-panel .log-info{ color: #00e5ff; }
+.log-panel .log-warn{ color: #ffb300; }
+.log-panel .log-iter{ color: #7a8a9a; }
+
+/* Expanded stats grid */
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px; padding: 12px 16px;
+  background: var(--panel); border-top: 1px solid var(--border);
+}
+.stat-cell {
+  background: var(--bg); border-radius: 3px;
+  padding: 7px 10px; border: 1px solid var(--border);
+}
+.stat-cell .sk {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; color: var(--dim);
+  text-transform: uppercase; margin-bottom: 2px;
+}
+.stat-cell .sv2 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px; font-weight: 600; color: var(--ink);
+}
+.stat-cell .sv2.good { color: var(--accent3); }
+.stat-cell .sv2.warn { color: var(--accent); }
+
+/* Canvas area — add log row */
+.canvas-area {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  min-height: 0;
+  padding: 16px 20px 12px;
+  gap: 10px;
+  background: var(--bg);
+}
+
+.log-area {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.log-header {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; color: var(--dim);
+  margin-bottom: 5px; text-transform: uppercase;
+}
+
+  margin: 12px 16px 0;
+  width: calc(100% - 32px);
+  padding: 12px;
+  background: var(--ink);
+  color: var(--highlight);
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; letter-spacing: 2px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.run-btn:hover { background: var(--accent); color: white; }
+.run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Status */
+.status-bar {
+  padding: 10px 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--dim);
+  border-top: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 12px;
+  margin-top: auto;
+}
+.sv { color: var(--ink); font-weight: 600; }
+
+/* CANVAS AREA */
+.canvas-area {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 0;
+  padding: 20px;
+  gap: 12px;
+  background: var(--bg);
+}
+
+.canvas-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  min-height: 0;
+}
+
+.canvas-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.cp-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  justify-content: space-between;
+}
+
+.cp-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 1.5px;
+  color: var(--dim); text-transform: uppercase;
+}
+
+.cp-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; padding: 2px 7px;
+  border-radius: 2px;
+  background: var(--bg);
+  color: var(--dim);
+  border: 1px solid var(--border);
+}
+
+.cp-badge.running { background: #fff3cd; color: #856404; border-color: #ffc107; animation: pulse 0.8s infinite; }
+.cp-badge.done { background: #d4edda; color: #155724; border-color: #28a745; }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+canvas { display: block; width: 100%; height: 100%; object-fit: contain; flex: 1; min-height: 0; }
+
+.placeholder {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  letter-spacing: 1px;
+}
+.placeholder .big { font-size: 36px; opacity: 0.2; }
+
+/* Legend */
+.legend-bar {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 16px;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  box-shadow: var(--shadow);
+}
+.li {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+  color: var(--dim);
+}
+.li-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PerceptLab</div>
+  <div class="header-tags">
+    <div class="tag">RANSAC</div>
+    <div class="tag">COLOR_CLUSTER</div>
+    <div class="tag">DEPTH_CLUSTER</div>
+    <div class="tag" id="hdr-primitive" style="color:var(--highlight);border-color:rgba(255,209,102,0.4)">LINE</div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- Image Source -->
+    <div class="sb-section">
+      <div class="sb-label">Image Source</div>
+      <div class="img-source-tabs">
+        <button class="isrc-tab active" data-src="samples">SAMPLES</button>
+        <button class="isrc-tab" data-src="upload">UPLOAD</button>
+      </div>
+
+      <div id="panel-samples">
+        <div class="sample-grid" id="sample-grid"></div>
+      </div>
+
+      <div id="panel-upload" style="display:none">
+        <div class="upload-zone" id="upload-zone">
+          <div class="icon">⬆</div>
+          <strong style="font-size:13px">Drop image here</strong>
+          <p>or click to browse</p>
+        </div>
+        <input type="file" id="file-input" accept="image/*">
+      </div>
+    </div>
+
+    <!-- Algorithm -->
+    <div class="sb-section">
+      <div class="sb-label">Algorithm</div>
+      <div class="algo-tabs">
+        <button class="algo-tab active" data-algo="ransac">RANSAC</button>
+        <button class="algo-tab" data-algo="color">COLOR</button>
+        <button class="algo-tab" data-algo="depth">DEPTH</button>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="sb-section">
+      <div class="sb-label">Parameters</div>
+      <div class="ctrl-panels">
+
+        <div id="ctrl-ransac" class="show">
+          <!-- Shared sample pts -->
+          <div class="ctrl-row"><span class="ctrl-lbl">SAMPLE_PTS</span><span class="ctrl-val" id="v-spts">2000</span></div>
+          <input type="range" id="sl-spts" min="500" max="5000" step="100" value="2000">
+
+          <!-- Primitive selector -->
+          <div class="sb-label" style="margin-top:4px;margin-bottom:6px">PRIMITIVE</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px" id="primitive-btns">
+            <button class="prim-btn active" data-prim="line">LINE</button>
+            <button class="prim-btn" data-prim="plane">PLANE</button>
+            <button class="prim-btn" data-prim="circle">CIRCLE</button>
+            <button class="prim-btn" data-prim="ellipse">ELLIPSE</button>
+          </div>
+
+          <!-- Shared RANSAC params -->
+          <div class="ctrl-row" style="margin-top:6px"><span class="ctrl-lbl">ITERATIONS</span><span class="ctrl-val" id="v-iters">100</span></div>
+          <input type="range" id="sl-iters" min="20" max="300" value="100">
+          <div class="ctrl-row"><span class="ctrl-lbl">THRESHOLD_px</span><span class="ctrl-val" id="v-thresh">10</span></div>
+          <input type="range" id="sl-thresh" min="2" max="40" value="10">
+          <div class="ctrl-row"><span class="ctrl-lbl">MIN_INLIERS_%</span><span class="ctrl-val" id="v-mininl">5</span></div>
+          <input type="range" id="sl-mininl" min="1" max="30" value="5">
+
+          <!-- Per-primitive params -->
+          <div id="pp-line">
+            <div class="ctrl-row"><span class="ctrl-lbl">MAX_LINES</span><span class="ctrl-val" id="v-planes">4</span></div>
+            <input type="range" id="sl-planes" min="1" max="8" value="4">
+            <div class="sample-info" style="margin-top:2px">Fits N dominant lines. Samples 2 pts → line equation → counts inliers within threshold distance.</div>
+          </div>
+          <div id="pp-plane" style="display:none">
+            <div class="ctrl-row"><span class="ctrl-lbl">MAX_PLANES</span><span class="ctrl-val" id="v-maxplanes">3</span></div>
+            <input type="range" id="sl-maxplanes" min="1" max="6" value="3">
+            <div class="sample-info" style="margin-top:2px">Projects 2D homography. Samples 4 point correspondences to estimate dominant flat surface regions.</div>
+          </div>
+          <div id="pp-circle" style="display:none">
+            <div class="ctrl-row"><span class="ctrl-lbl">MAX_CIRCLES</span><span class="ctrl-val" id="v-maxcircles">3</span></div>
+            <input type="range" id="sl-maxcircles" min="1" max="6" value="3">
+            <div class="ctrl-row"><span class="ctrl-lbl">MIN_RADIUS_px</span><span class="ctrl-val" id="v-minr">15</span></div>
+            <input type="range" id="sl-minr" min="5" max="80" value="15">
+            <div class="ctrl-row"><span class="ctrl-lbl">MAX_RADIUS_px</span><span class="ctrl-val" id="v-maxr">120</span></div>
+            <input type="range" id="sl-maxr" min="20" max="300" value="120">
+            <div class="sample-info" style="margin-top:2px">Samples 3 pts → unique circumscribed circle → counts inliers within radial threshold.</div>
+          </div>
+          <div id="pp-ellipse" style="display:none">
+            <div class="ctrl-row"><span class="ctrl-lbl">MAX_ELLIPSES</span><span class="ctrl-val" id="v-maxell">2</span></div>
+            <input type="range" id="sl-maxell" min="1" max="5" value="2">
+            <div class="ctrl-row"><span class="ctrl-lbl">ASPECT_RATIO</span><span class="ctrl-val" id="v-aspect">0.5</span></div>
+            <input type="range" id="sl-aspect" min="1" max="9" value="5">
+            <div class="sample-info" style="margin-top:2px">Samples 5 pts → fits general conic/ellipse. Threshold = algebraic distance. Slower but powerful.</div>
+          </div>
+        </div>
+
+        <div id="ctrl-color" style="display:none">
+          <div class="ctrl-row has-tip" data-tip="How many pixels to sample from the image as color data points. More = finer clusters but slower K-Means."><span class="ctrl-lbl">SAMPLE_PTS</span><span class="ctrl-val" id="v-spts2">3000</span></div>
+          <input type="range" id="sl-spts2" min="500" max="8000" step="100" value="3000">
+          <div class="ctrl-row has-tip" data-tip="Number of color clusters K. K-Means++ will initialize them spread across color space, then iterate to convergence."><span class="ctrl-lbl">K_CLUSTERS</span><span class="ctrl-val" id="v-k">6</span></div>
+          <input type="range" id="sl-k" min="2" max="12" value="6">
+          <div class="ctrl-row has-tip" data-tip="Maximum K-Means iterations. Stops early if centroids converge. Higher = more accurate but diminishing returns."><span class="ctrl-lbl">MAX_ITER</span><span class="ctrl-val" id="v-kmiter">25</span></div>
+          <input type="range" id="sl-kmiter" min="5" max="60" value="25">
+          <div class="ctrl-row has-tip" data-tip="RGB: raw channels. LAB: perceptually uniform (recommended for natural images). HSV: separates hue from brightness."><span class="ctrl-lbl">COLOR_SPACE</span><span class="ctrl-val" id="v-cspace">RGB</span></div>
+          <div style="display:flex;gap:4px;margin-top:2px">
+            <button class="isrc-tab active" style="flex:1;font-size:9px;padding:5px" data-cspace="RGB">RGB</button>
+            <button class="isrc-tab" style="flex:1;font-size:9px;padding:5px" data-cspace="LAB">LAB</button>
+            <button class="isrc-tab" style="flex:1;font-size:9px;padding:5px" data-cspace="HSV">HSV</button>
+          </div>
+          <div class="sample-info" style="margin-top:4px">
+            Groups pixels by color similarity using K-Means++. Each cluster gets a unique overlay color. Centroid markers show spatial center of each cluster.
+          </div>
+        </div>
+
+        <div id="ctrl-depth" style="display:none">
+          <div class="ctrl-row has-tip" data-tip="How many pixels to sample. More points = denser clusters and better DBSCAN coverage."><span class="ctrl-lbl">SAMPLE_PTS</span><span class="ctrl-val" id="v-spts3">3000</span></div>
+          <input type="range" id="sl-spts3" min="500" max="6000" step="100" value="3000">
+          <div class="ctrl-row has-tip" data-tip="Number of depth layers to stratify the image into before running DBSCAN. More bins = finer depth resolution."><span class="ctrl-lbl">DEPTH_BINS</span><span class="ctrl-val" id="v-dbins">6</span></div>
+          <input type="range" id="sl-dbins" min="2" max="12" value="6">
+          <div class="ctrl-row has-tip" data-tip="DBSCAN neighborhood radius (pixels). Points within ε of each other are considered neighbors. Larger = bigger, fewer clusters."><span class="ctrl-lbl">SPATIAL_ε_px</span><span class="ctrl-val" id="v-deps">20</span></div>
+          <input type="range" id="sl-deps" min="5" max="80" value="20">
+          <div class="ctrl-row has-tip" data-tip="Minimum points in a neighborhood to form a cluster core. Higher = noisier areas become 'noise' rather than clusters."><span class="ctrl-lbl">MIN_PTS</span><span class="ctrl-val" id="v-dmin">10</span></div>
+          <input type="range" id="sl-dmin" min="3" max="40" value="10">
+          <div class="sample-info" style="margin-top:4px">
+            Simulates depth from luminance (bright=near, dark=far). Stratifies into depth bins, runs DBSCAN spatially within each bin.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <button class="run-btn" id="btn-run" disabled>▶ RUN — load image first</button>
+
+    <div class="status-bar" id="status-bar">
+      <span>STATUS: <span class="sv" id="s-status">IDLE</span></span>
+      <span>PTS: <span class="sv" id="s-pts">—</span></span>
+      <span>CLUSTERS: <span class="sv" id="s-cl">—</span></span>
+      <span>TIME: <span class="sv" id="s-time">—</span></span>
+    </div>
+  </div>
+
+  <!-- CANVAS AREA -->
+  <div class="canvas-area">
+    <div class="canvas-grid">
+      <div class="canvas-panel">
+        <div class="cp-header">
+          <span class="cp-title">INPUT IMAGE</span>
+          <span class="cp-badge" id="badge-in">NO IMAGE</span>
+        </div>
+        <div class="placeholder" id="ph-in">
+          <div class="big">⬆</div>
+          <div>Load a sample or upload an image</div>
+        </div>
+        <canvas id="c-input" style="display:none"></canvas>
+      </div>
+      <div class="canvas-panel">
+        <div class="cp-header">
+          <span class="cp-title" id="out-title">OUTPUT</span>
+          <span class="cp-badge" id="badge-out">WAITING</span>
+        </div>
+        <div id="progress-wrap" class="progress-wrap" style="margin:0;border-radius:0;display:none"><div class="progress-bar" id="progress-bar"></div></div>
+        <div class="placeholder" id="ph-out">
+          <div class="big">⚙</div>
+          <div>Run algorithm to see results</div>
+        </div>
+        <canvas id="c-output" style="display:none"></canvas>
+      </div>
+    </div>
+
+    <!-- Log + stats row -->
+    <div class="log-area">
+      <div>
+        <div class="log-header">Algorithm Log</div>
+        <div class="log-panel" id="log-panel">
+          <div class="log-line"><span class="log-ts">00:00</span><span class="log-info">PerceptLab ready. Load an image to begin.</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="log-header">Run Statistics</div>
+        <div class="stats-grid" style="padding:0;background:transparent;border:none">
+          <div class="stat-cell"><div class="sk">Status</div><div class="sv2" id="s-status">IDLE</div></div>
+          <div class="stat-cell"><div class="sk">Runtime</div><div class="sv2" id="s-time">—</div></div>
+          <div class="stat-cell"><div class="sk">Points Sampled</div><div class="sv2" id="s-pts">—</div></div>
+          <div class="stat-cell"><div class="sk">Clusters / Fits</div><div class="sv2" id="s-cl">—</div></div>
+          <div class="stat-cell"><div class="sk">Inlier Rate</div><div class="sv2" id="s-inlrate">—</div></div>
+          <div class="stat-cell"><div class="sk">Iterations Run</div><div class="sv2" id="s-iters">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend-bar" id="legend">
+      <span class="li" style="color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:10px">Legend appears after running</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// GLOBALS
+// =====================================================================
+const COLORS = [
+  '#e63946','#2a9d8f','#e9c46a','#457b9d','#a8dadc',
+  '#f4a261','#264653','#e76f51','#06d6a0','#118ab2',
+  '#ffd166','#9b5de5'
+];
+
+let loadedImage = null;    // ImageData from loaded image
+let currentAlgo = 'ransac';
+let currentCspace = 'RGB';
+let sampledPoints = [];    // {x, y, r, g, b, depth}
+
+const cInput  = document.getElementById('c-input');
+const cOutput = document.getElementById('c-output');
+const ctxIn   = cInput.getContext('2d');
+const ctxOut  = cOutput.getContext('2d');
+
+// =====================================================================
+// SYNTHETIC SAMPLE IMAGE GENERATION
+// =====================================================================
+const SAMPLES = [
+  { name: 'TABLE', fn: genTable },
+  { name: 'MUSEUM', fn: genMuseum },
+  { name: 'SHELF', fn: genShelf },
+  { name: 'SCENE', fn: genScene },
+];
+
+function genTable(ctx, w, h) {
+  // Background wall
+  const wall = ctx.createLinearGradient(0,0,0,h*0.6);
+  wall.addColorStop(0, '#b8c5d6'); wall.addColorStop(1, '#8fa3b8');
+  ctx.fillStyle = wall; ctx.fillRect(0, 0, w, h*0.62);
+
+  // Table surface
+  const tbl = ctx.createLinearGradient(0,h*0.6,0,h);
+  tbl.addColorStop(0,'#c8a96e'); tbl.addColorStop(1,'#8a6530');
+  ctx.fillStyle = tbl; ctx.fillRect(0, h*0.6, w, h*0.4);
+
+  // Table edge line
+  ctx.fillStyle = '#6b4a20'; ctx.fillRect(0, h*0.6, w, 4);
+
+  // Objects on table
+  // Mug
+  ctx.fillStyle = '#d62828'; roundRect(ctx, w*0.15, h*0.38, 60, 80, 6);
+  ctx.fillStyle = '#8b0000'; ctx.fillRect(w*0.15, h*0.38, 60, 8);
+  // Book stack
+  ctx.fillStyle = '#3d6b4f'; roundRect(ctx, w*0.45, h*0.42, 90, 20, 2);
+  ctx.fillStyle = '#2a4d38'; roundRect(ctx, w*0.47, h*0.44, 86, 18, 2);
+  ctx.fillStyle = '#5a8a6a'; roundRect(ctx, w*0.43, h*0.40, 94, 20, 2);
+  // Vase
+  ctx.fillStyle = '#4a7fb5';
+  ctx.beginPath(); ctx.ellipse(w*0.78, h*0.48, 22, 30, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#6699cc';
+  ctx.beginPath(); ctx.ellipse(w*0.78, h*0.35, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+  // Shadow under objects
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.beginPath(); ctx.ellipse(w*0.2, h*0.62, 35, 6, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(w*0.5, h*0.62, 50, 6, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(w*0.78, h*0.62, 25, 5, 0, 0, Math.PI*2); ctx.fill();
+}
+
+function genMuseum(ctx, w, h) {
+  // Marble floor
+  const floor = ctx.createLinearGradient(0,h*0.7,0,h);
+  floor.addColorStop(0,'#e8e0d4'); floor.addColorStop(1,'#c8bfb0');
+  ctx.fillStyle = floor; ctx.fillRect(0,h*0.7,w,h*0.3);
+  // Wall
+  ctx.fillStyle = '#f5f0e8'; ctx.fillRect(0,0,w,h*0.72);
+  // Baseboard
+  ctx.fillStyle = '#c8bfb0'; ctx.fillRect(0,h*0.7,w,8);
+
+  // Painting 1
+  ctx.fillStyle = '#2c3e50'; ctx.fillRect(w*0.05, h*0.05, 140, 5); // frame top
+  ctx.fillStyle = '#2c3e50'; ctx.fillRect(w*0.05, h*0.5, 140, 5);
+  ctx.fillStyle = '#2c3e50'; ctx.fillRect(w*0.05, h*0.05, 5, h*0.45+5);
+  ctx.fillStyle = '#2c3e50'; ctx.fillRect(w*0.05+135, h*0.05, 5, h*0.45+5);
+  const pg = ctx.createLinearGradient(w*0.06, h*0.06, w*0.05+130, h*0.49);
+  pg.addColorStop(0,'#e8a87c'); pg.addColorStop(0.5,'#c4704a'); pg.addColorStop(1,'#7a4520');
+  ctx.fillStyle = pg; ctx.fillRect(w*0.06, h*0.07, 130, h*0.43);
+
+  // Pedestal with sculpture
+  ctx.fillStyle = '#d4cfc8'; ctx.fillRect(w*0.6, h*0.45, 100, h*0.25);
+  ctx.fillStyle = '#bfb8b0'; ctx.fillRect(w*0.58, h*0.68, 104, 10);
+  // Sculpture (abstract shapes)
+  ctx.fillStyle = '#e8e0d8';
+  ctx.beginPath(); ctx.ellipse(w*0.71, h*0.35, 18, 28, 0.2, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#d0c8c0';
+  ctx.beginPath(); ctx.ellipse(w*0.68, h*0.3, 10, 14, -0.3, 0, Math.PI*2); ctx.fill();
+
+  // Spotlight cone
+  ctx.fillStyle = 'rgba(255,240,180,0.08)';
+  ctx.beginPath(); ctx.moveTo(w*0.71, 0); ctx.lineTo(w*0.55, h*0.7); ctx.lineTo(w*0.87, h*0.7); ctx.closePath(); ctx.fill();
+}
+
+function genShelf(ctx, w, h) {
+  // Background
+  ctx.fillStyle = '#2d2416'; ctx.fillRect(0,0,w,h);
+  // Shelf boards
+  const shelves = [h*0.18, h*0.42, h*0.65, h*0.88];
+  shelves.forEach(sy => {
+    ctx.fillStyle = '#8B6914'; ctx.fillRect(0, sy, w, 14);
+    ctx.fillStyle = '#6b4f0e'; ctx.fillRect(0, sy+14, w, 3);
+  });
+  // Books between shelves
+  const bookColors = ['#c84b2f','#457b9d','#2a8c4a','#9b5de5','#f4a261','#e63946','#2a9d8f','#e9c46a'];
+  let bx = 8;
+  for (let i = 0; i < 8; i++) {
+    const bw = 18 + Math.random()*14;
+    const bh = (shelves[1]-shelves[0]-14) * (0.5+Math.random()*0.5);
+    ctx.fillStyle = bookColors[i % bookColors.length];
+    ctx.fillRect(bx, shelves[0]-bh, bw, bh);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(bx+bw-2, shelves[0]-bh, 2, bh);
+    bx += bw + 2;
+  }
+  bx = 6;
+  for (let i = 0; i < 9; i++) {
+    const bw = 16 + Math.random()*16;
+    const bh = (shelves[2]-shelves[1]-14) * (0.4+Math.random()*0.55);
+    ctx.fillStyle = bookColors[(i+3) % bookColors.length];
+    ctx.fillRect(bx, shelves[1]-bh, bw, bh);
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(bx+bw-2, shelves[1]-bh, 2, bh);
+    bx += bw + 3;
+  }
+  // Plant on top shelf
+  ctx.fillStyle = '#5a3a1a';
+  ctx.beginPath(); ctx.ellipse(w*0.82, shelves[0], 14, 9, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#2d7a2a';
+  for (let i = 0; i < 5; i++) {
+    const a = (i/5)*Math.PI*2;
+    ctx.beginPath(); ctx.ellipse(w*0.82+Math.cos(a)*16, shelves[0]-Math.sin(a)*16-10, 10, 5, a, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function genScene(ctx, w, h) {
+  // Sky
+  const sky = ctx.createLinearGradient(0,0,0,h*0.5);
+  sky.addColorStop(0,'#87ceeb'); sky.addColorStop(1,'#b0d8f0');
+  ctx.fillStyle = sky; ctx.fillRect(0,0,w,h*0.5);
+  // Ground
+  const gnd = ctx.createLinearGradient(0,h*0.5,0,h);
+  gnd.addColorStop(0,'#6aaa4a'); gnd.addColorStop(1,'#3d7a20');
+  ctx.fillStyle = gnd; ctx.fillRect(0,h*0.5,w,h*0.5);
+  // Path
+  ctx.fillStyle = '#c8b88a';
+  ctx.beginPath(); ctx.moveTo(w*0.35,h*0.5); ctx.lineTo(w*0.65,h*0.5); ctx.lineTo(w*0.85,h); ctx.lineTo(w*0.15,h); ctx.closePath(); ctx.fill();
+  // Trees
+  [[0.1,0.4],[0.25,0.45],[0.75,0.42],[0.88,0.38]].forEach(([fx,fy]) => {
+    ctx.fillStyle = '#5a3a1a'; ctx.fillRect(fx*w-4, fy*h, 8, h*(0.5-fy)+10);
+    ctx.fillStyle = '#2d7a2a';
+    ctx.beginPath(); ctx.arc(fx*w, fy*h-10, 25, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#1a5c1a';
+    ctx.beginPath(); ctx.arc(fx*w-8, fy*h-5, 18, 0, Math.PI*2); ctx.fill();
+  });
+  // Building
+  ctx.fillStyle = '#c8a87a'; ctx.fillRect(w*0.4, h*0.2, w*0.2, h*0.3);
+  ctx.fillStyle = '#a88460'; ctx.fillRect(w*0.38, h*0.18, w*0.24, 10);
+  ctx.fillStyle = '#6b4a20'; ctx.fillRect(w*0.46, h*0.36, 28, h*0.14+2);
+  [[0.43,0.24],[0.54,0.24],[0.43,0.32],[0.54,0.32]].forEach(([fx,fy]) => {
+    ctx.fillStyle = '#87ceeb'; ctx.fillRect(fx*w, fy*h, 18, 22);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(fx*w,fy*h,9,22);
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+  ctx.closePath(); ctx.fill();
+}
+
+// Build sample thumbnails
+function buildSamples() {
+  const grid = document.getElementById('sample-grid');
+  SAMPLES.forEach((s, si) => {
+    const btn = document.createElement('button');
+    btn.className = 'sample-btn';
+    const tn = document.createElement('canvas');
+    tn.width = 120; tn.height = 60;
+    const tc = tn.getContext('2d');
+    s.fn(tc, 120, 60);
+    const lbl = document.createElement('div');
+    lbl.className = 'slabel'; lbl.textContent = s.name;
+    btn.appendChild(tn); btn.appendChild(lbl);
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadSample(si);
+    });
+    grid.appendChild(btn);
+    s._canvas = tn;
+  });
+}
+
+function loadSample(idx) {
+  const S = SAMPLES[idx];
+  const oc = document.createElement('canvas');
+  oc.width = 600; oc.height = 400;
+  S.fn(oc.getContext('2d'), 600, 400);
+  setImage(oc);
+}
+
+// =====================================================================
+// IMAGE LOADING
+// =====================================================================
+function setImage(sourceCanvas) {
+  const W = sourceCanvas.width, H = sourceCanvas.height;
+  cInput.width = W; cInput.height = H;
+  ctxIn.drawImage(sourceCanvas, 0, 0);
+  loadedImage = ctxIn.getImageData(0, 0, W, H);
+
+  document.getElementById('ph-in').style.display = 'none';
+  cInput.style.display = 'block';
+  document.getElementById('badge-in').textContent = `${W}×${H}`;
+  document.getElementById('badge-in').className = 'cp-badge done';
+  document.getElementById('btn-run').disabled = false;
+  document.getElementById('btn-run').textContent = '▶ RUN ALGORITHM';
+  document.getElementById('s-pts').textContent = '—';
+  LOG.start('IMAGE LOADED');
+  LOG.ok(`Image ready — ${W}×${H}px (${(W*H/1000).toFixed(0)}k pixels)`);
+  LOG.info('Select an algorithm and primitive, adjust parameters, then click Run');
+
+  // Reset output
+  document.getElementById('ph-out').style.display = 'flex';
+  cOutput.style.display = 'none';
+  document.getElementById('badge-out').textContent = 'WAITING';
+  document.getElementById('badge-out').className = 'cp-badge';
+  setLegend([]);
+}
+
+function loadImageFile(file) {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    const oc = document.createElement('canvas');
+    const maxW = 800, maxH = 600;
+    let w = img.width, h = img.height;
+    if (w > maxW) { h = h*(maxW/w); w = maxW; }
+    if (h > maxH) { w = w*(maxH/h); h = maxH; }
+    oc.width = Math.round(w); oc.height = Math.round(h);
+    oc.getContext('2d').drawImage(img, 0, 0, oc.width, oc.height);
+    setImage(oc);
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}
+
+// =====================================================================
+// POINT SAMPLING
+// =====================================================================
+function samplePoints(n) {
+  if (!loadedImage) return [];
+  const {data, width, height} = loadedImage;
+  const pts = [];
+  // Stratified sampling
+  const step = Math.max(1, Math.floor(Math.sqrt(width * height / n)));
+  for (let y = 0; y < height; y += step) {
+    for (let x = 0; x < width; x += step) {
+      const i = (y * width + x) * 4;
+      const r = data[i], g = data[i+1], b = data[i+2];
+      // Luminance as simulated depth (brighter = closer)
+      const lum = 0.299*r + 0.587*g + 0.114*b;
+      // Add slight jitter
+      const jx = x + (Math.random()-0.5)*step;
+      const jy = y + (Math.random()-0.5)*step;
+      pts.push({ x: jx, y: jy, r, g, b, depth: lum });
+    }
+  }
+  // Shuffle and cap
+  for (let i = pts.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [pts[i],pts[j]] = [pts[j],pts[i]];
+  }
+  return pts.slice(0, n);
+}
+
+// =====================================================================
+// COLOR SPACE CONVERSION
+// =====================================================================
+function toColorSpace(r, g, b, space) {
+  if (space === 'RGB') return [r/255, g/255, b/255];
+  if (space === 'HSV') {
+    r/=255; g/=255; b/=255;
+    const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
+    let h=0;
+    if(d>0){
+      if(max===r) h=((g-b)/d)%6;
+      else if(max===g) h=(b-r)/d+2;
+      else h=(r-g)/d+4;
+      h/=6; if(h<0)h+=1;
+    }
+    return [h, max===0?0:d/max, max];
+  }
+  if (space === 'LAB') {
+    // sRGB -> linear -> XYZ -> LAB
+    const lin = v => { v/=255; return v>0.04045 ? Math.pow((v+0.055)/1.055,2.4) : v/12.92; };
+    const rl=lin(r),gl=lin(g),bl=lin(b);
+    const X=(rl*0.4124+gl*0.3576+bl*0.1805)/0.95047;
+    const Y=(rl*0.2126+gl*0.7152+bl*0.0722)/1.00000;
+    const Z=(rl*0.0193+gl*0.1192+bl*0.9505)/1.08883;
+    const f = v => v>0.008856 ? Math.cbrt(v) : 7.787*v+16/116;
+    const L=116*f(Y)-16, A=500*(f(X)-f(Y)), B=200*(f(Y)-f(Z));
+    return [L/100, (A+128)/255, (B+128)/255];
+  }
+  return [r/255, g/255, b/255];
+}
+
+function colorDist(a, b) {
+  return (a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2;
+}
+
+// =====================================================================
+// DRAW HELPERS
+// =====================================================================
+function showOutput(title) {
+  document.getElementById('ph-out').style.display = 'none';
+  cOutput.style.display = 'block';
+  cOutput.width = loadedImage.width;
+  cOutput.height = loadedImage.height;
+  document.getElementById('out-title').textContent = title;
+  document.getElementById('badge-out').textContent = 'RUNNING';
+  document.getElementById('badge-out').className = 'cp-badge running';
+}
+
+function finishOutput() {
+  document.getElementById('badge-out').textContent = 'DONE';
+  document.getElementById('badge-out').className = 'cp-badge done';
+}
+
+function setLegend(items) {
+  const lg = document.getElementById('legend');
+  if (!items.length) {
+    lg.innerHTML = '<span class="li" style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--dim)">Legend appears after running</span>';
+    return;
+  }
+  lg.innerHTML = items.map(it => `
+    <div class="li">
+      <div class="li-dot" style="background:${it.color}"></div>
+      ${it.label}
+    </div>
+  `).join('');
+}
+
+function setStats(clusters, ms, pts, inliers, totalIters) {
+  document.getElementById('s-status').textContent = 'DONE';
+  document.getElementById('s-status').className = 'sv2 good';
+  document.getElementById('s-time').textContent = ms.toFixed(0) + 'ms';
+  document.getElementById('s-pts').textContent = pts.toLocaleString();
+  document.getElementById('s-cl').textContent = clusters;
+  document.getElementById('s-iters').textContent = totalIters !== undefined ? totalIters.toLocaleString() : '—';
+  if (inliers !== undefined && pts > 0) {
+    const rate = ((inliers / pts) * 100).toFixed(1) + '%';
+    const el = document.getElementById('s-inlrate');
+    el.textContent = rate;
+    el.className = 'sv2 ' + (inliers/pts > 0.3 ? 'good' : inliers/pts > 0.1 ? '' : 'warn');
+  } else {
+    document.getElementById('s-inlrate').textContent = '—';
+  }
+}
+
+// =====================================================================
+// LOGGER
+// =====================================================================
+const LOG = (() => {
+  const panel = () => document.getElementById('log-panel');
+  let startMs = 0;
+  function ts() {
+    const e = performance.now() - startMs;
+    const s = (e/1000).toFixed(2);
+    return `+${s}s`;
+  }
+  function append(cls, msg) {
+    const p = panel();
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = `<span class="log-ts">${ts()}</span><span class="${cls}">${msg}</span>`;
+    p.appendChild(line);
+    p.scrollTop = p.scrollHeight;
+  }
+  return {
+    start(label) {
+      startMs = performance.now();
+      const p = panel();
+      p.innerHTML = '';
+      append('log-info', `▶ Starting ${label}`);
+    },
+    info:  msg => append('log-info', msg),
+    ok:    msg => append('log-ok',   '✓ ' + msg),
+    warn:  msg => append('log-warn', '⚠ ' + msg),
+    iter:  msg => append('log-iter', msg),
+    step:  msg => append('log-info', '→ ' + msg),
+  };
+})();
+
+// =====================================================================
+// PROGRESS BAR
+// =====================================================================
+function setProgress(pct) {
+  const wrap = document.getElementById('progress-wrap');
+  const bar  = document.getElementById('progress-bar');
+  wrap.style.display = pct >= 100 || pct < 0 ? 'none' : 'block';
+  bar.style.width = Math.min(pct, 100) + '%';
+}
+
+// =====================================================================
+// RANSAC SHARED HELPERS
+// =====================================================================
+function getRansacParams() {
+  return {
+    nPts:      parseInt(document.getElementById('sl-spts').value),
+    iters:     parseInt(document.getElementById('sl-iters').value),
+    thresh:    parseInt(document.getElementById('sl-thresh').value),
+    minInlPct: parseInt(document.getElementById('sl-mininl').value) / 100,
+  };
+}
+function ransacSetup(title) {
+  const p = getRansacParams();
+  const pts = samplePoints(p.nPts);
+  p.minInl = Math.floor(pts.length * p.minInlPct);
+  showOutput(title);
+  ctxOut.drawImage(cInput, 0, 0);
+  ctxOut.fillStyle = 'rgba(10,12,15,0.52)';
+  ctxOut.fillRect(0, 0, cOutput.width, cOutput.height);
+  return { p, pts };
+}
+function drawOutliers(pts, inlierSet) {
+  pts.forEach((pt, i) => {
+    if (!inlierSet.has(i)) {
+      ctxOut.fillStyle = 'rgba(120,140,160,0.25)';
+      ctxOut.beginPath(); ctxOut.arc(pt.x, pt.y, 1.5, 0, Math.PI*2); ctxOut.fill();
+    }
+  });
+}
+
+// =====================================================================
+// RANSAC — LINE
+// =====================================================================
+function runRansacLine() {
+  const t0 = performance.now();
+  const maxLines = parseInt(document.getElementById('sl-planes').value);
+  LOG.start(`RANSAC LINE — up to ${maxLines} lines`);
+  const { p, pts } = ransacSetup('RANSAC — LINE FITTING');
+  LOG.step(`Sampled ${pts.length} points from image`);
+  LOG.step(`Running ${p.iters} iterations per line, threshold=${p.thresh}px, min inliers=${p.minInl}`);
+  setProgress(5);
+  let remaining = pts.map((_,i) => i);
+  const planes = [];
+  let totalIters = 0;
+  for (let pl = 0; pl < maxLines && remaining.length > p.minInl; pl++) {
+    let best = null, bestInl = [];
+    for (let it = 0; it < p.iters; it++) {
+      totalIters++;
+      const ai = Math.floor(Math.random()*remaining.length);
+      const bi = Math.floor(Math.random()*remaining.length);
+      if (ai===bi) continue;
+      const {x:x1,y:y1}=pts[remaining[ai]], {x:x2,y:y2}=pts[remaining[bi]];
+      const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+      if(len<2) continue;
+      const a=-dy/len,b=dx/len,c=-(a*x1+b*y1);
+      const inl=remaining.filter(i=>Math.abs(a*pts[i].x+b*pts[i].y+c)<p.thresh);
+      if(inl.length>bestInl.length){bestInl=inl;best={a,b,c};}
+    }
+    setProgress(5 + ((pl+1)/maxLines)*85);
+    if(!best||bestInl.length<p.minInl) {
+      LOG.warn(`Line ${pl+1}: best consensus only ${bestInl.length} pts < min ${p.minInl} — stopping`);
+      break;
+    }
+    LOG.ok(`Line ${pl+1}: ${bestInl.length} inliers (${(bestInl.length/pts.length*100).toFixed(1)}% of remaining)`);
+    planes.push({model:best,inliers:bestInl,color:COLORS[pl%COLORS.length]});
+    const iset=new Set(bestInl); remaining=remaining.filter(i=>!iset.has(i));
+  }
+  if (remaining.length <= p.minInl) LOG.info(`Stopped: remaining points (${remaining.length}) < min inlier threshold`);
+  const allInl=new Set(planes.flatMap(pl=>pl.inliers));
+  drawOutliers(pts,allInl);
+  const W=cOutput.width,H=cOutput.height;
+  planes.forEach(({model:{a,b,c},inliers,color})=>{
+    inliers.forEach(i=>{ctxOut.fillStyle=color;ctxOut.beginPath();ctxOut.arc(pts[i].x,pts[i].y,2.5,0,Math.PI*2);ctxOut.fill();});
+    const p1=Math.abs(b)>0.01?[0,-(a*0+c)/b]:[-c/a,0];
+    const p2=Math.abs(b)>0.01?[W,-(a*W+c)/b]:[-c/a,H];
+    ctxOut.save();ctxOut.strokeStyle=color;ctxOut.lineWidth=2.5;ctxOut.shadowColor=color;ctxOut.shadowBlur=10;
+    ctxOut.beginPath();ctxOut.moveTo(...p1);ctxOut.lineTo(...p2);ctxOut.stroke();ctxOut.restore();
+  });
+  const t1=performance.now();
+  const totalInl = planes.reduce((s,pl)=>s+pl.inliers.length,0);
+  LOG.ok(`Done — ${planes.length} lines, ${totalInl} total inliers, ${(t1-t0).toFixed(0)}ms`);
+  setProgress(100);
+  finishOutput(); setStats(planes.length,t1-t0,pts.length,totalInl,totalIters);
+  setLegend([...planes.map((pl,i)=>({color:pl.color,label:`LINE ${i+1} — ${pl.inliers.length} inliers`})),{color:'rgba(120,140,160,0.5)',label:'OUTLIERS'}]);
+}
+
+// =====================================================================
+// RANSAC — PLANE (convex hull of dominant coplanar region)
+// =====================================================================
+function runRansacPlane() {
+  const t0=performance.now();
+  const maxPlanes=parseInt(document.getElementById('sl-maxplanes').value);
+  LOG.start(`RANSAC PLANE — up to ${maxPlanes} regions`);
+  const {p,pts}=ransacSetup('RANSAC — PLANE REGIONS');
+  LOG.step(`Sampled ${pts.length} points, threshold=${p.thresh*1.5}px (1.5× band), min inliers=${p.minInl}`);
+  setProgress(5);
+  let remaining=pts.map((_,i)=>i);
+  const results=[];
+  let totalIters=0;
+  for(let pl=0;pl<maxPlanes&&remaining.length>p.minInl;pl++){
+    let best=null,bestInl=[];
+    for(let it=0;it<p.iters;it++){
+      totalIters++;
+      const si=[0,1,2].map(()=>remaining[Math.floor(Math.random()*remaining.length)]);
+      if(new Set(si).size<3) continue;
+      const [p0,p1,p2]=si.map(i=>pts[i]);
+      const dx=p1.x-p0.x,dy=p1.y-p0.y,len=Math.sqrt(dx*dx+dy*dy);
+      if(len<2) continue;
+      const a=-dy/len,b=dx/len,c=-(a*p0.x+b*p0.y);
+      const inl=remaining.filter(i=>Math.abs(a*pts[i].x+b*pts[i].y+c)<p.thresh*1.5);
+      if(inl.length>bestInl.length){bestInl=inl;best={a,b,c};}
+    }
+    setProgress(5+((pl+1)/maxPlanes)*85);
+    if(!best||bestInl.length<p.minInl){LOG.warn(`Plane ${pl+1}: only ${bestInl.length} inliers — stopping`);break;}
+    LOG.ok(`Plane ${pl+1}: ${bestInl.length} inliers, drawing convex hull`);
+    results.push({model:best,inliers:bestInl,color:COLORS[pl%COLORS.length]});
+    const iset=new Set(bestInl); remaining=remaining.filter(i=>!iset.has(i));
+  }
+  const allInl=new Set(results.flatMap(r=>r.inliers));
+  drawOutliers(pts,allInl);
+  results.forEach(({inliers,color})=>{
+    inliers.forEach(i=>{ctxOut.fillStyle=color+'cc';ctxOut.beginPath();ctxOut.arc(pts[i].x,pts[i].y,3,0,Math.PI*2);ctxOut.fill();});
+    const hull=convexHull(inliers.map(i=>pts[i]));
+    if(hull.length>2){
+      ctxOut.save();ctxOut.strokeStyle=color;ctxOut.lineWidth=2;ctxOut.fillStyle=color+'22';
+      ctxOut.shadowColor=color;ctxOut.shadowBlur=8;
+      ctxOut.beginPath();ctxOut.moveTo(hull[0].x,hull[0].y);
+      hull.forEach(pt=>ctxOut.lineTo(pt.x,pt.y));
+      ctxOut.closePath();ctxOut.fill();ctxOut.stroke();ctxOut.restore();
+    }
+  });
+  const t1=performance.now();
+  const totalInl=results.reduce((s,r)=>s+r.inliers.length,0);
+  LOG.ok(`Done — ${results.length} planes, ${(t1-t0).toFixed(0)}ms`);
+  setProgress(100); finishOutput(); setStats(results.length,t1-t0,pts.length,totalInl,totalIters);
+  setLegend([...results.map((r,i)=>({color:r.color,label:`PLANE ${i+1} — ${r.inliers.length} inliers`})),{color:'rgba(120,140,160,0.5)',label:'OUTLIERS'}]);
+}
+function convexHull(points){
+  if(points.length<3) return points;
+  const sorted=[...points].sort((a,b)=>a.x-b.x||a.y-b.y);
+  const cross=(O,A,B)=>(A.x-O.x)*(B.y-O.y)-(A.y-O.y)*(B.x-O.x);
+  const lower=[],upper=[];
+  for(const p of sorted){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop();lower.push(p);}
+  for(let i=sorted.length-1;i>=0;i--){const p=sorted[i];while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop();upper.push(p);}
+  upper.pop();lower.pop(); return lower.concat(upper);
+}
+
+// =====================================================================
+// RANSAC — CIRCLE
+// =====================================================================
+function runRansacCircle(){
+  const t0=performance.now();
+  const maxCircles=parseInt(document.getElementById('sl-maxcircles').value);
+  const minR=parseInt(document.getElementById('sl-minr').value);
+  const maxR=parseInt(document.getElementById('sl-maxr').value);
+  LOG.start(`RANSAC CIRCLE — up to ${maxCircles} circles, r=[${minR},${maxR}]px`);
+  const {p,pts}=ransacSetup('RANSAC — CIRCLE FITTING');
+  LOG.step(`${pts.length} sampled points, threshold=${p.thresh}px radial distance`);
+  setProgress(5);
+  let remaining=pts.map((_,i)=>i);
+  const results=[];
+  let totalIters=0;
+  for(let ci=0;ci<maxCircles&&remaining.length>p.minInl;ci++){
+    let best=null,bestInl=[];
+    for(let it=0;it<p.iters;it++){
+      totalIters++;
+      const ai=remaining[Math.floor(Math.random()*remaining.length)];
+      const bi=remaining[Math.floor(Math.random()*remaining.length)];
+      const di=remaining[Math.floor(Math.random()*remaining.length)];
+      if(ai===bi||bi===di||ai===di) continue;
+      const circ=circumcircle(pts[ai],pts[bi],pts[di]);
+      if(!circ) continue;
+      const {cx,cy,r}=circ;
+      if(r<minR||r>maxR) continue;
+      const inl=remaining.filter(i=>Math.abs(Math.sqrt((pts[i].x-cx)**2+(pts[i].y-cy)**2)-r)<p.thresh);
+      if(inl.length>bestInl.length){bestInl=inl;best={cx,cy,r};}
+    }
+    setProgress(5+((ci+1)/maxCircles)*85);
+    if(!best||bestInl.length<p.minInl){LOG.warn(`Circle ${ci+1}: best only ${bestInl.length} inliers — stopping`);break;}
+    LOG.ok(`Circle ${ci+1}: center=(${best.cx.toFixed(0)},${best.cy.toFixed(0)}) r=${best.r.toFixed(1)}px, ${bestInl.length} inliers`);
+    results.push({model:best,inliers:bestInl,color:COLORS[ci%COLORS.length]});
+    const iset=new Set(bestInl); remaining=remaining.filter(i=>!iset.has(i));
+  }
+  const allInl=new Set(results.flatMap(r=>r.inliers));
+  drawOutliers(pts,allInl);
+  results.forEach(({model:{cx,cy,r},inliers,color})=>{
+    inliers.forEach(i=>{ctxOut.fillStyle=color;ctxOut.beginPath();ctxOut.arc(pts[i].x,pts[i].y,2.5,0,Math.PI*2);ctxOut.fill();});
+    ctxOut.save();ctxOut.strokeStyle=color;ctxOut.lineWidth=2.5;ctxOut.fillStyle=color+'18';
+    ctxOut.shadowColor=color;ctxOut.shadowBlur=12;
+    ctxOut.beginPath();ctxOut.arc(cx,cy,r,0,Math.PI*2);ctxOut.fill();ctxOut.stroke();
+    ctxOut.lineWidth=1.5;
+    ctxOut.beginPath();ctxOut.moveTo(cx-8,cy);ctxOut.lineTo(cx+8,cy);ctxOut.stroke();
+    ctxOut.beginPath();ctxOut.moveTo(cx,cy-8);ctxOut.lineTo(cx,cy+8);ctxOut.stroke();
+    ctxOut.restore();
+  });
+  const t1=performance.now();
+  const totalInl=results.reduce((s,r)=>s+r.inliers.length,0);
+  LOG.ok(`Done — ${results.length} circles, ${(t1-t0).toFixed(0)}ms`);
+  setProgress(100); finishOutput(); setStats(results.length,t1-t0,pts.length,totalInl,totalIters);
+  setLegend([...results.map((r,i)=>({color:r.color,label:`CIRCLE ${i+1} — r=${Math.round(r.model.r)}px, ${r.inliers.length} inliers`})),{color:'rgba(120,140,160,0.5)',label:'OUTLIERS'}]);
+}
+function circumcircle(A,B,C){
+  const ax=A.x,ay=A.y,bx=B.x,by=B.y,cx=C.x,cy=C.y;
+  const D=2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
+  if(Math.abs(D)<1e-6) return null;
+  const ux=((ax*ax+ay*ay)*(by-cy)+(bx*bx+by*by)*(cy-ay)+(cx*cx+cy*cy)*(ay-by))/D;
+  const uy=((ax*ax+ay*ay)*(cx-bx)+(bx*bx+by*by)*(ax-cx)+(cx*cx+cy*cy)*(bx-ax))/D;
+  return {cx:ux,cy:uy,r:Math.sqrt((ax-ux)**2+(ay-uy)**2)};
+}
+
+// =====================================================================
+// RANSAC — ELLIPSE (5-point algebraic fit)
+// =====================================================================
+function runRansacEllipse(){
+  const t0=performance.now();
+  const maxEll=parseInt(document.getElementById('sl-maxell').value);
+  const aspectLimit=parseInt(document.getElementById('sl-aspect').value)/10;
+  LOG.start(`RANSAC ELLIPSE — up to ${maxEll} ellipses, min aspect=${aspectLimit}`);
+  const {p,pts}=ransacSetup('RANSAC — ELLIPSE FITTING');
+  LOG.step(`${pts.length} points, 5-point algebraic conic fit per iteration`);
+  LOG.info('Note: ellipse fitting is slower — each iter solves a 5×5 linear system');
+  setProgress(5);
+  let remaining=pts.map((_,i)=>i);
+  const results=[];
+  let totalIters=0;
+  for(let ei=0;ei<maxEll&&remaining.length>p.minInl;ei++){
+    let best=null,bestInl=[];
+    for(let it=0;it<p.iters;it++){
+      totalIters++;
+      if(remaining.length<5) break;
+      const sample=[],used=new Set();
+      let attempts=0;
+      while(sample.length<5&&attempts<50){attempts++;const idx=remaining[Math.floor(Math.random()*remaining.length)];if(!used.has(idx)){used.add(idx);sample.push(idx);}}
+      if(sample.length<5) continue;
+      const ell=fitEllipse5(sample.map(i=>pts[i]));
+      if(!ell) continue;
+      if(ell.a>0&&ell.b>0&&(Math.min(ell.a,ell.b)/Math.max(ell.a,ell.b))<aspectLimit) continue;
+      const {A,B,C,D,E,F}=ell.conic;
+      const inl=remaining.filter(i=>{
+        const {x,y}=pts[i];
+        const val=A*x*x+B*x*y+C*y*y+D*x+E*y+F;
+        const gx=2*A*x+B*y+D,gy=B*x+2*C*y+E;
+        return Math.abs(val/(Math.sqrt(gx*gx+gy*gy)||1))<p.thresh;
+      });
+      if(inl.length>bestInl.length){bestInl=inl;best=ell;}
+    }
+    setProgress(5+((ei+1)/maxEll)*85);
+    if(!best||bestInl.length<p.minInl){LOG.warn(`Ellipse ${ei+1}: best ${bestInl.length} < min ${p.minInl} — stopping`);break;}
+    LOG.ok(`Ellipse ${ei+1}: ${Math.round(best.a)}×${Math.round(best.b)}px @ (${best.cx.toFixed(0)},${best.cy.toFixed(0)}), ${bestInl.length} inliers`);
+    results.push({model:best,inliers:bestInl,color:COLORS[ei%COLORS.length]});
+    const iset=new Set(bestInl); remaining=remaining.filter(i=>!iset.has(i));
+  }
+  const allInl=new Set(results.flatMap(r=>r.inliers));
+  drawOutliers(pts,allInl);
+  results.forEach(({model,inliers,color})=>{
+    inliers.forEach(i=>{ctxOut.fillStyle=color;ctxOut.beginPath();ctxOut.arc(pts[i].x,pts[i].y,2.5,0,Math.PI*2);ctxOut.fill();});
+    ctxOut.save();ctxOut.strokeStyle=color;ctxOut.lineWidth=2.5;ctxOut.fillStyle=color+'18';
+    ctxOut.shadowColor=color;ctxOut.shadowBlur=12;
+    ctxOut.translate(model.cx,model.cy);ctxOut.rotate(model.angle);
+    ctxOut.beginPath();ctxOut.ellipse(0,0,Math.max(model.a,2),Math.max(model.b,2),0,0,Math.PI*2);
+    ctxOut.fill();ctxOut.stroke();ctxOut.restore();
+  });
+  const t1=performance.now();
+  const totalInl=results.reduce((s,r)=>s+r.inliers.length,0);
+  LOG.ok(`Done — ${results.length} ellipses, ${totalIters} total iters, ${(t1-t0).toFixed(0)}ms`);
+  setProgress(100); finishOutput(); setStats(results.length,t1-t0,pts.length,totalInl,totalIters);
+  setLegend([...results.map((r,i)=>({color:r.color,label:`ELLIPSE ${i+1} — ${Math.round(r.model.a)}×${Math.round(r.model.b)}px, ${r.inliers.length} inliers`})),{color:'rgba(120,140,160,0.5)',label:'OUTLIERS'}]);
+}
+  const ax=A.x,ay=A.y,bx=B.x,by=B.y,cx=C.x,cy=C.y;
+  const D=2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
+  if(Math.abs(D)<1e-6) return null;
+  const ux=((ax*ax+ay*ay)*(by-cy)+(bx*bx+by*by)*(cy-ay)+(cx*cx+cy*cy)*(ay-by))/D;
+  const uy=((ax*ax+ay*ay)*(cx-bx)+(bx*bx+by*by)*(ax-cx)+(cx*cx+cy*cy)*(bx-ax))/D;
+  return {cx:ux,cy:uy,r:Math.sqrt((ax-ux)**2+(ay-uy)**2)};
+}
+
+// =====================================================================
+// RANSAC — ELLIPSE (5-point algebraic fit)
+// =====================================================================
+function runRansacEllipse(){
+  const t0=performance.now();
+  const maxEll=parseInt(document.getElementById('sl-maxell').value);
+  const aspectLimit=parseInt(document.getElementById('sl-aspect').value)/10;
+  const {p,pts}=ransacSetup('RANSAC — ELLIPSE FITTING');
+  let remaining=pts.map((_,i)=>i);
+  const results=[];
+  for(let ei=0;ei<maxEll&&remaining.length>p.minInl;ei++){
+    let best=null,bestInl=[];
+    for(let it=0;it<p.iters;it++){
+      if(remaining.length<5) break;
+      const sample=[],used=new Set();
+      while(sample.length<5){const idx=remaining[Math.floor(Math.random()*remaining.length)];if(!used.has(idx)){used.add(idx);sample.push(idx);}}
+      const ell=fitEllipse5(sample.map(i=>pts[i]));
+      if(!ell) continue;
+      if(ell.a>0&&ell.b>0&&(Math.min(ell.a,ell.b)/Math.max(ell.a,ell.b))<aspectLimit) continue;
+      const {A,B,C,D,E,F}=ell.conic;
+      const inl=remaining.filter(i=>{
+        const {x,y}=pts[i];
+        const val=A*x*x+B*x*y+C*y*y+D*x+E*y+F;
+        const gx=2*A*x+B*y+D,gy=B*x+2*C*y+E;
+        return Math.abs(val/(Math.sqrt(gx*gx+gy*gy)||1))<p.thresh;
+      });
+      if(inl.length>bestInl.length){bestInl=inl;best=ell;}
+    }
+    if(!best||bestInl.length<p.minInl) break;
+    results.push({model:best,inliers:bestInl,color:COLORS[ei%COLORS.length]});
+    const iset=new Set(bestInl); remaining=remaining.filter(i=>!iset.has(i));
+  }
+  const allInl=new Set(results.flatMap(r=>r.inliers));
+  drawOutliers(pts,allInl);
+  results.forEach(({model,inliers,color})=>{
+    inliers.forEach(i=>{ctxOut.fillStyle=color;ctxOut.beginPath();ctxOut.arc(pts[i].x,pts[i].y,2.5,0,Math.PI*2);ctxOut.fill();});
+    ctxOut.save();ctxOut.strokeStyle=color;ctxOut.lineWidth=2.5;ctxOut.fillStyle=color+'18';
+    ctxOut.shadowColor=color;ctxOut.shadowBlur=12;
+    ctxOut.translate(model.cx,model.cy);ctxOut.rotate(model.angle);
+    ctxOut.beginPath();ctxOut.ellipse(0,0,Math.max(model.a,2),Math.max(model.b,2),0,0,Math.PI*2);
+    ctxOut.fill();ctxOut.stroke();ctxOut.restore();
+  });
+  const t1=performance.now(); finishOutput(); setStats(results.length,t1-t0,pts.length);
+  setLegend([...results.map((r,i)=>({color:r.color,label:`ELLIPSE ${i+1} — ${Math.round(r.model.a)}×${Math.round(r.model.b)}px, ${r.inliers.length} inliers`})),{color:'rgba(120,140,160,0.5)',label:'OUTLIERS'}]);
+}
+function fitEllipse5(pts5){
+  const rows=pts5.map(({x,y})=>[x*x,x*y,y*y,x,y,1]);
+  const M=rows.map(r=>r.slice(0,5));
+  const rhs=rows.map(r=>-r[5]);
+  const coeffs=solve5x5(M,rhs);
+  if(!coeffs) return null;
+  const [A,B,C,D,E]=coeffs,F=1;
+  if(B*B-4*A*C>=0) return null;
+  const geo=conicToGeometric(A,B,C,D,E,F);
+  if(!geo) return null;
+  return {...geo,conic:{A,B,C,D,E,F}};
+}
+function solve5x5(M,b){
+  const n=5,aug=M.map((row,i)=>[...row,b[i]]);
+  for(let col=0;col<n;col++){
+    let maxRow=col;
+    for(let row=col+1;row<n;row++) if(Math.abs(aug[row][col])>Math.abs(aug[maxRow][col])) maxRow=row;
+    [aug[col],aug[maxRow]]=[aug[maxRow],aug[col]];
+    if(Math.abs(aug[col][col])<1e-10) return null;
+    for(let row=col+1;row<n;row++){const f=aug[row][col]/aug[col][col];for(let j=col;j<=n;j++) aug[row][j]-=f*aug[col][j];}
+  }
+  const x=new Array(n).fill(0);
+  for(let i=n-1;i>=0;i--){x[i]=aug[i][n];for(let j=i+1;j<n;j++) x[i]-=aug[i][j]*x[j];x[i]/=aug[i][i];}
+  return x;
+}
+function conicToGeometric(A,B,C,D,E,F){
+  const denom=4*A*C-B*B;
+  if(Math.abs(denom)<1e-8) return null;
+  const cx=(B*E-2*C*D)/denom, cy=(B*D-2*A*E)/denom;
+  const M1=A+C,M2=Math.sqrt((A-C)**2+B*B);
+  const lam1=(M1+M2)/2,lam2=(M1-M2)/2;
+  const val=-(A*cx*cx+B*cx*cy+C*cy*cy+D*cx+E*cy+F);
+  if(val<=0) return null;
+  const a=Math.sqrt(val/lam2),b=Math.sqrt(val/lam1);
+  if(!isFinite(a)||!isFinite(b)||a<=0||b<=0||a>2000||b>2000) return null;
+  const angle=B===0?(A<=C?0:Math.PI/2):0.5*Math.atan2(B,A-C);
+  return {cx,cy,a,b,angle};
+}
+
+// =====================================================================
+// K-MEANS COLOR CLUSTERING
+// =====================================================================
+function runColorCluster() {
+  const t0 = performance.now();
+  const nPts = parseInt(document.getElementById('sl-spts2').value);
+  const k = parseInt(document.getElementById('sl-k').value);
+  const maxIter = parseInt(document.getElementById('sl-kmiter').value);
+  LOG.start(`K-MEANS COLOR CLUSTERING — k=${k}, space=${currentCspace}`);
+  setProgress(5);
+
+  const pts = samplePoints(nPts);
+  LOG.step(`Sampled ${pts.length} pixels, converted to ${currentCspace} color space`);
+  const vecs = pts.map(pt => toColorSpace(pt.r, pt.g, pt.b, currentCspace));
+
+  // K-Means++ init
+  LOG.step(`Initializing ${k} centroids via K-Means++`);
+  const centroids = [vecs[Math.floor(Math.random()*vecs.length)]];
+  while (centroids.length < k) {
+    const dists = vecs.map(v => Math.min(...centroids.map(c => colorDist(v,c))));
+    const total = dists.reduce((a,b) => a+b, 0);
+    let r = Math.random() * total, ci = 0;
+    for (; ci < dists.length-1 && r > 0; ci++) r -= dists[ci];
+    centroids.push(vecs[ci]);
+  }
+  LOG.ok(`K-Means++ init complete — centroids spread across color space`);
+
+  let assignments = new Array(vecs.length).fill(0);
+  let actualIters = 0;
+  for (let iter = 0; iter < maxIter; iter++) {
+    actualIters++;
+    let changed = false;
+    vecs.forEach((v, i) => {
+      let best = 0, bestD = Infinity;
+      centroids.forEach((c, j) => { const d = colorDist(v,c); if(d<bestD){bestD=d;best=j;} });
+      if (assignments[i] !== best) { assignments[i] = best; changed = true; }
+    });
+    setProgress(5 + (iter/maxIter)*80);
+    if (!changed) { LOG.ok(`Converged at iteration ${iter+1}/${maxIter}`); break; }
+    if (iter === maxIter-1) LOG.warn(`Reached max iterations (${maxIter}) without full convergence`);
+    const sums = Array.from({length:k}, () => [0,0,0]);
+    const counts = new Array(k).fill(0);
+    vecs.forEach((v, i) => {
+      const a = assignments[i];
+      sums[a][0]+=v[0]; sums[a][1]+=v[1]; sums[a][2]+=v[2]; counts[a]++;
+    });
+    centroids.forEach((_, j) => {
+      if (counts[j] > 0) { centroids[j] = sums[j].map(v => v/counts[j]); }
+    });
+  }
+
+  // Log cluster sizes
+  for (let j = 0; j < k; j++) {
+    const cnt = pts.filter((_,i) => assignments[i] === j).length;
+    LOG.iter(`Cluster ${j+1}: ${cnt} pts (${(cnt/pts.length*100).toFixed(1)}%)`);
+  }
+
+  showOutput(`K-MEANS — ${k} COLOR CLUSTERS (${currentCspace})`);
+  setProgress(90);
+
+  ctxOut.drawImage(cInput, 0, 0);
+  pts.forEach((pt, i) => {
+    const clr = COLORS[assignments[i] % COLORS.length];
+    ctxOut.fillStyle = clr + 'b0';
+    ctxOut.beginPath(); ctxOut.arc(pt.x, pt.y, 4, 0, Math.PI*2); ctxOut.fill();
+  });
+
+  for (let j = 0; j < k; j++) {
+    const cPts = pts.filter((_,i) => assignments[i] === j);
+    if (cPts.length === 0) continue;
+    const cx = cPts.reduce((s,p)=>s+p.x,0)/cPts.length;
+    const cy = cPts.reduce((s,p)=>s+p.y,0)/cPts.length;
+    const clr = COLORS[j % COLORS.length];
+    ctxOut.save();
+    ctxOut.strokeStyle = clr; ctxOut.fillStyle = '#fff';
+    ctxOut.lineWidth = 3; ctxOut.shadowColor = clr; ctxOut.shadowBlur = 12;
+    ctxOut.beginPath(); ctxOut.arc(cx, cy, 9, 0, Math.PI*2); ctxOut.fill(); ctxOut.stroke();
+    ctxOut.fillStyle = clr; ctxOut.font = "bold 10px 'IBM Plex Mono'"; ctxOut.textAlign = 'center';
+    ctxOut.fillText(j+1, cx, cy+3.5);
+    ctxOut.restore();
+  }
+
+  const t1 = performance.now();
+  LOG.ok(`Done — ${k} clusters, ${actualIters} iterations, ${(t1-t0).toFixed(0)}ms`);
+  setProgress(100); finishOutput();
+  setStats(k, t1-t0, pts.length, undefined, actualIters);
+  setLegend(centroids.map((_,j) => ({
+    color: COLORS[j%COLORS.length],
+    label: `CLUSTER ${j+1} — ${pts.filter((_,i)=>assignments[i]===j).length} pts`
+  })));
+}
+
+// =====================================================================
+// DEPTH CLUSTERING (DBSCAN per depth bin)
+// =====================================================================
+function runDepthCluster() {
+  const t0 = performance.now();
+  const nPts = parseInt(document.getElementById('sl-spts3').value);
+  const bins = parseInt(document.getElementById('sl-dbins').value);
+  const eps = parseInt(document.getElementById('sl-deps').value);
+  const minPts = parseInt(document.getElementById('sl-dmin').value);
+  LOG.start(`DEPTH CLUSTER — ${bins} bins, ε=${eps}px, minPts=${minPts}`);
+  setProgress(5);
+
+  const pts = samplePoints(nPts);
+  const depths = pts.map(p => p.depth);
+  const maxD = Math.max(...depths), minD = Math.min(...depths);
+  const binSize = (maxD - minD) / bins || 1;
+  const depthBins = depths.map(d => Math.min(Math.floor((d-minD)/binSize), bins-1));
+  LOG.step(`${pts.length} pts sampled. Depth range [${minD.toFixed(0)}, ${maxD.toFixed(0)}], bin size=${binSize.toFixed(1)}`);
+
+  const labels = new Array(pts.length).fill(-1);
+  let clusterCount = 0;
+
+  for (let b = 0; b < bins; b++) {
+    const binIdx = pts.map((_,i) => i).filter(i => depthBins[i] === b);
+    setProgress(5 + (b/bins)*70);
+    if (binIdx.length < minPts) { LOG.iter(`Bin ${b+1}: ${binIdx.length} pts — too sparse, skipped`); continue; }
+
+    const visited = new Set();
+    const noise = new Set();
+    const range = idx => binIdx.filter(j => {
+      const dx = pts[idx].x - pts[j].x, dy = pts[idx].y - pts[j].y;
+      return Math.sqrt(dx*dx+dy*dy) <= eps;
+    });
+
+    let binClusters = 0;
+    binIdx.forEach(idx => {
+      if (visited.has(idx)) return;
+      visited.add(idx);
+      const nbrs = range(idx);
+      if (nbrs.length < minPts) { noise.add(idx); return; }
+      const cid = clusterCount++;
+      binClusters++;
+      labels[idx] = cid;
+      const queue = [...nbrs];
+      const inQ = new Set(queue);
+      while (queue.length) {
+        const q = queue.shift();
+        if (!visited.has(q)) {
+          visited.add(q);
+          const qn = range(q);
+          if (qn.length >= minPts) {
+            qn.forEach(n => { if (!inQ.has(n)) { queue.push(n); inQ.add(n); } });
+          }
+        }
+        if (labels[q] === -1) labels[q] = cid;
+      }
+    });
+    LOG.iter(`Bin ${b+1}: ${binIdx.length} pts → ${binClusters} clusters, ${noise.size} noise`);
+  }
+
+  // Draw image as base
+  ctxOut.drawImage(cInput, 0, 0);
+
+  // Depth heatmap layer
+  const W = cOutput.width, H = cOutput.height;
+  const imgData = ctxOut.getImageData(0, 0, W, H);
+  // Tint original pixels by depth bin
+  pts.forEach(pt => {
+    const xi = Math.round(pt.x), yi = Math.round(pt.y);
+    if (xi < 0 || xi >= W || yi < 0 || yi >= H) return;
+    const norm = (pt.depth - minD) / (maxD - minD + 1);
+    const hue = (1 - norm) * 240; // blue = far, red = near
+    const [hr, hg, hb] = hslToRgb(hue/360, 0.9, 0.5);
+    const idx = (yi*W+xi)*4;
+    imgData.data[idx]   = Math.round(imgData.data[idx]   * 0.4 + hr * 0.6);
+    imgData.data[idx+1] = Math.round(imgData.data[idx+1] * 0.4 + hg * 0.6);
+    imgData.data[idx+2] = Math.round(imgData.data[idx+2] * 0.4 + hb * 0.6);
+  });
+  ctxOut.putImageData(imgData, 0, 0);
+
+  // Draw cluster points
+  pts.forEach((pt, i) => {
+    const cid = labels[i];
+    if (cid < 0) {
+      ctxOut.fillStyle = 'rgba(40,40,40,0.25)';
+      ctxOut.beginPath(); ctxOut.arc(pt.x, pt.y, 1.5, 0, Math.PI*2); ctxOut.fill();
+    } else {
+      const clr = COLORS[cid % COLORS.length];
+      ctxOut.fillStyle = clr + 'cc';
+      ctxOut.beginPath(); ctxOut.arc(pt.x, pt.y, 3, 0, Math.PI*2); ctxOut.fill();
+    }
+  });
+
+  // Depth bin legends (horizontal bars at left)
+  for (let b = 0; b < bins; b++) {
+    const norm = b / (bins - 1);
+    const hue = (1 - norm) * 240;
+    const y = H * (b / bins) + H/(2*bins);
+    ctxOut.save();
+    ctxOut.fillStyle = `hsla(${hue},90%,50%,0.7)`;
+    ctxOut.fillRect(4, H*(b/bins), 8, H/bins - 2);
+    ctxOut.font = "9px 'IBM Plex Mono'";
+    ctxOut.fillStyle = 'rgba(255,255,255,0.7)';
+    ctxOut.fillText(`B${b+1}`, 14, H*(b/bins)+11);
+    ctxOut.restore();
+  }
+
+  const t1 = performance.now();
+  setProgress(90);
+  finishOutput();
+  const numCl = new Set(labels.filter(l => l >= 0)).size;
+  const noiseCount = labels.filter(l => l < 0).length;
+  LOG.ok(`Done — ${numCl} clusters across ${bins} depth bins, ${noiseCount} noise pts, ${(t1-t0).toFixed(0)}ms`);
+  setProgress(100);
+  setStats(numCl, t1-t0, pts.length, pts.length - noiseCount, undefined);
+
+  // Build legend for top clusters by size
+  const clCounts = {};
+  labels.forEach(l => { if(l>=0){ clCounts[l] = (clCounts[l]||0)+1; } });
+  const topCl = Object.entries(clCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  setLegend([
+    ...topCl.map(([id, cnt]) => ({ color: COLORS[+id%COLORS.length], label: `CLUSTER ${+id+1} — ${cnt} pts` })),
+    { color: 'rgba(40,40,40,0.5)', label: 'NOISE' }
+  ]);
+}
+
+function hslToRgb(h, s, l) {
+  let r,g,b;
+  if(s===0){r=g=b=l;}
+  else {
+    const q=l<0.5?l*(1+s):l+s-l*s, p=2*l-q;
+    r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+  }
+  return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+function hue2rgb(p,q,t){
+  if(t<0)t+=1;if(t>1)t-=1;
+  if(t<1/6)return p+(q-p)*6*t;
+  if(t<1/2)return q;
+  if(t<2/3)return p+(q-p)*(2/3-t)*6;
+  return p;
+}
+
+// =====================================================================
+// UI WIRING
+// =====================================================================
+
+// Source tabs
+document.querySelectorAll('.isrc-tab[data-src]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.isrc-tab[data-src]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const src = btn.dataset.src;
+    document.getElementById('panel-samples').style.display = src === 'samples' ? '' : 'none';
+    document.getElementById('panel-upload').style.display  = src === 'upload'  ? '' : 'none';
+  });
+});
+
+// Upload
+document.getElementById('upload-zone').addEventListener('click', () => document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) loadImageFile(e.target.files[0]);
+});
+const uz = document.getElementById('upload-zone');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('drag'));
+uz.addEventListener('drop', e => {
+  e.preventDefault(); uz.classList.remove('drag');
+  if (e.dataTransfer.files[0]) loadImageFile(e.dataTransfer.files[0]);
+});
+
+// Algo tabs
+document.querySelectorAll('.algo-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.algo-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentAlgo = btn.dataset.algo;
+    ['ransac','color','depth'].forEach(a => {
+      const el = document.getElementById(`ctrl-${a}`);
+      el.style.display = a === currentAlgo ? 'flex' : 'none';
+      if (a === currentAlgo) el.classList.add('show'); else el.classList.remove('show');
+    });
+    document.getElementById('s-status').textContent = 'IDLE';
+  });
+});
+
+// Color space selector
+document.querySelectorAll('[data-cspace]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-cspace]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCspace = btn.dataset.cspace;
+    document.getElementById('v-cspace').textContent = currentCspace;
+  });
+});
+
+// Primitive selector
+let currentPrimitive = 'line';
+document.querySelectorAll('.prim-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.prim-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPrimitive = btn.dataset.prim;
+    document.getElementById('hdr-primitive').textContent = btn.dataset.prim.toUpperCase();
+    ['line','plane','circle','ellipse'].forEach(p => {
+      document.getElementById(`pp-${p}`).style.display = p === currentPrimitive ? '' : 'none';
+    });
+  });
+});
+
+// Sliders
+const sliders = [
+  ['sl-spts','v-spts'],['sl-iters','v-iters'],['sl-thresh','v-thresh'],['sl-mininl','v-mininl'],['sl-planes','v-planes'],
+  ['sl-spts2','v-spts2'],['sl-k','v-k'],['sl-kmiter','v-kmiter'],
+  ['sl-spts3','v-spts3'],['sl-dbins','v-dbins'],['sl-deps','v-deps'],['sl-dmin','v-dmin'],
+  ['sl-maxplanes','v-maxplanes'],['sl-maxcircles','v-maxcircles'],['sl-minr','v-minr'],['sl-maxr','v-maxr'],
+  ['sl-maxell','v-maxell'],
+];
+// Aspect ratio slider shows 1 decimal
+document.getElementById('sl-aspect').addEventListener('input', function() {
+  document.getElementById('v-aspect').textContent = (this.value / 10).toFixed(1);
+});
+sliders.forEach(([sid, vid]) => {
+  const sl = document.getElementById(sid), vl = document.getElementById(vid);
+  if (sl && vl) sl.addEventListener('input', () => { vl.textContent = sl.value; });
+});
+
+// Run
+document.getElementById('btn-run').addEventListener('click', () => {
+  if (!loadedImage) return;
+  document.getElementById('s-status').textContent = 'RUNNING';
+  setTimeout(() => {
+    if (currentAlgo === 'ransac') {
+      if (currentPrimitive === 'line') runRansacLine();
+      else if (currentPrimitive === 'plane') runRansacPlane();
+      else if (currentPrimitive === 'circle') runRansacCircle();
+      else if (currentPrimitive === 'ellipse') runRansacEllipse();
+    } else if (currentAlgo === 'color') runColorCluster();
+    else runDepthCluster();
+  }, 30);
+});
+
+// Init
+buildSamples();
+</script>
+</body>
+</html>
