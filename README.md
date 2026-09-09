@@ -1,14 +1,18 @@
 # PerceptLab
-Visualization tool for common detection algorithms in robotics (RANSAC, Color Clustering, etc.)
 
-TBD
-2. need to make sure ransac acc running properly, looks a bit weird when trying to find planes - sample images might have too much variation which is what the algorithm is picking up on
-3. allow for way more iterations + ability to see how that drops accuracy
-4. implement similiar metrics to the lab w TP, FP, NP - label sample images and ask users to label their sample images maybe??
-5. put in some images i create as sample info to make this much more interesting and accurate
+PerceptLab is an interactive computer vision sandbox for building intuition before writing a full perception pipeline. It turns common image-analysis algorithms into visible, adjustable experiments that run entirely in the browser.
 
-success:
-1. was able to deploy on github pages, finally showing sample images
+## What it explores
 
-goal:
-1. abstract away algo to help understand it at a deeper level bf coding it (like the CNN visualizer lowk)
+- **RANSAC:** line, plane, circle, and ellipse fitting with adjustable sampling, thresholds, and iteration counts.
+- **Color clustering:** K-Means++ in RGB, LAB, or HSV color space.
+- **Depth clustering:** luminance-based depth bins followed by spatial DBSCAN grouping.
+- **Instrumentation:** live algorithm logs, progress feedback, inlier rates, cluster counts, and runtime statistics.
+
+## Run locally
+
+Open `index.html` in a browser, or serve the folder with any static file server. No build step or package installation is required.
+
+## Why it exists
+
+The project is designed as a visual notebook: make an algorithm legible, change one assumption, and watch the result move. Synthetic scenes provide repeatable starting points, while image upload makes it possible to test the same ideas on real data. It was heavily inspired by taking CS 3630 in Spring 2026 where we worked on developing this algorithms in our coding assignments, but I struggled to visualize what was actually happening and wanted an easy tool to do so. We were introduced to similiar tools for CNNs and I thought it would be a cool exercise to tackle!

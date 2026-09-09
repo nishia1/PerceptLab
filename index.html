@@ -3,13 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PerceptLab</title>
+<meta name="description" content="An interactive computer vision lab for understanding RANSAC, color clustering, and depth segmentation.">
+<title>PerceptLab | Visual intuition for computer vision</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-  <div class="logo">PerceptLab</div>
+<header class="site-header">
+  <div class="brand-lockup">
+    <div class="logo">PerceptLab</div>
+    <span class="brand-note">computer vision, made visible</span>
+  </div>
   <div class="header-tags">
     <div class="tag">RANSAC</div>
     <div class="tag">COLOR_CLUSTER</div>
@@ -21,10 +25,10 @@
 <div class="main">
 
   <!-- ── SIDEBAR ── -->
-  <div class="sidebar">
+  <aside class="sidebar" aria-label="Experiment controls">
 
     <div class="sb-section">
-      <div class="sb-label">Image Source</div>
+      <div class="sb-label"><span>01</span> Image Source</div>
       <div class="img-source-tabs">
         <button class="isrc-tab active" data-src="samples">SAMPLES</button>
         <button class="isrc-tab" data-src="upload">UPLOAD</button>
@@ -66,8 +70,8 @@
           </div>
           <input type="range" id="sl-spts" min="500" max="5000" step="100" value="2000">
 
-          <div class="sb-label" style="margin-top:4px;margin-bottom:6px">PRIMITIVE</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+          <div class="sb-label sub-label">PRIMITIVE</div>
+          <div class="primitive-grid">
             <button class="prim-btn active" data-prim="line">LINE</button>
             <button class="prim-btn" data-prim="plane">PLANE</button>
             <button class="prim-btn" data-prim="circle">CIRCLE</button>
@@ -146,10 +150,10 @@
           <div class="ctrl-row has-tip" data-tip="RGB: raw channels. LAB: perceptually uniform (best for photos). HSV: separates hue from brightness.">
             <span class="ctrl-lbl">COLOR_SPACE</span><span class="ctrl-val" id="v-cspace">RGB</span>
           </div>
-          <div style="display:flex;gap:4px;margin-top:2px">
-            <button class="isrc-tab active" style="flex:1;font-size:9px;padding:5px" data-cspace="RGB">RGB</button>
-            <button class="isrc-tab" style="flex:1;font-size:9px;padding:5px" data-cspace="LAB">LAB</button>
-            <button class="isrc-tab" style="flex:1;font-size:9px;padding:5px" data-cspace="HSV">HSV</button>
+          <div class="cspace-tabs">
+            <button class="isrc-tab active" data-cspace="RGB">RGB</button>
+            <button class="isrc-tab" data-cspace="LAB">LAB</button>
+            <button class="isrc-tab" data-cspace="HSV">HSV</button>
           </div>
           <div class="sample-info" style="margin-top:4px">Groups pixels by color similarity. Centroid markers show spatial center of each cluster.</div>
         </div>
@@ -181,14 +185,21 @@
     <button class="run-btn" id="btn-run" disabled>▶ RUN — load image first</button>
 
     <div class="status-bar">
-      <span>STATUS: <span class="sv" id="s-status">IDLE</span></span>
-      <span>PTS: <span class="sv" id="s-pts">—</span></span>
-      <span>TIME: <span class="sv" id="s-time">—</span></span>
+      <span>STATUS: <span class="sv" id="s-status-mini">IDLE</span></span>
+      <span>PTS: <span class="sv" id="s-pts-mini">—</span></span>
+      <span>TIME: <span class="sv" id="s-time-mini">—</span></span>
     </div>
-  </div>
+  </aside>
 
   <!-- ── CANVAS AREA ── -->
-  <div class="canvas-area">
+  <main class="canvas-area">
+    <div class="workspace-intro">
+      <div>
+        <p class="eyebrow">INTERACTIVE NOTEBOOK / 01</p>
+        <h1>See the signal<br><em>inside the image.</em></h1>
+      </div>
+      <p class="intro-copy">A hands-on visual sandbox for building intuition around robust fitting, color space, and spatial grouping.</p>
+    </div>
     <div class="canvas-grid">
       <div class="canvas-panel">
         <div class="cp-header">
@@ -243,7 +254,7 @@
     <div class="legend-bar" id="legend">
       <span class="li" style="font-family:'IBM Plex Mono',monospace;font-size:10px">Legend appears after running</span>
     </div>
-  </div>
+  </main>
 
 </div>
 

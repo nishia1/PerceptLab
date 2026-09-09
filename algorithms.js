@@ -55,8 +55,11 @@ function setProgress(pct) {
 function setStats(clusters, ms, pts, inliers, totalIters) {
   document.getElementById('s-status').textContent = 'DONE';
   document.getElementById('s-status').className = 'sv2 good';
+  document.getElementById('s-status-mini').textContent = 'DONE';
   document.getElementById('s-time').textContent = ms.toFixed(0) + 'ms';
+  document.getElementById('s-time-mini').textContent = ms.toFixed(0) + 'ms';
   document.getElementById('s-pts').textContent = pts.toLocaleString();
+  document.getElementById('s-pts-mini').textContent = pts.toLocaleString();
   document.getElementById('s-cl').textContent = clusters;
   document.getElementById('s-iters').textContent = totalIters !== undefined ? totalIters.toLocaleString() : '—';
   if (inliers !== undefined && pts > 0) {
@@ -729,6 +732,8 @@ document.querySelectorAll('.algo-tab').forEach(btn => {
       el.classList.toggle('show', a===currentAlgo);
     });
     document.getElementById('s-status').textContent='IDLE';
+    document.getElementById('s-status').className='sv2';
+    document.getElementById('s-status-mini').textContent='IDLE';
   });
 });
 
@@ -770,6 +775,8 @@ document.getElementById('sl-aspect').addEventListener('input',function(){
 document.getElementById('btn-run').addEventListener('click',()=>{
   if(!loadedImage) return;
   document.getElementById('s-status').textContent='RUNNING';
+  document.getElementById('s-status').className='sv2';
+  document.getElementById('s-status-mini').textContent='RUNNING';
   setTimeout(()=>{
     if(currentAlgo==='ransac'){
       if(currentPrimitive==='line') runRansacLine();
