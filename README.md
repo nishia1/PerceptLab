@@ -10,8 +10,7 @@ PerceptLab is an interactive computer vision sandbox for building intuition befo
 - **Instrumentation:** live algorithm logs, progress feedback, inlier rates, cluster counts, and runtime statistics.
 
 ## Run locally
-
-Open `index.html` in a browser, or serve the folder with any static file server. No build step or package installation is required.
+You can access this locally or simply by my Github Page which it is being hosted on currently.
 
 ## Why it exists
 
